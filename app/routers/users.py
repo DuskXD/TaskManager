@@ -6,7 +6,7 @@ from ..models import User
 from ..schemas import UserResponse
 from ..auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/users", tags=["Users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me", response_model=UserResponse)

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models import TaskStatus, TaskPriority, ProjectRole
 
 
@@ -137,7 +137,12 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    pass
+    @field_validator('due_date')
+    @classmethod
+    def check_due_date(cls, v):
+        if v and v.replace(tzinfo=None) < datetime.now():
+            raise ValueError('Дата выполнения не может быть в прошлом')
+        return v
 
 
 class TaskUpdate(BaseModel):

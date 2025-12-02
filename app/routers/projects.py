@@ -16,7 +16,7 @@ from ..schemas import (
 )
 from ..auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/projects", tags=["Projects"])
+router = APIRouter(prefix="/projects", tags=["Projects"])
 
 def check_project_access(project: Project, user: User):
     if project.owner_id == user.id:
@@ -296,6 +296,13 @@ def remove_project_member(
         raise HTTPException(
             status_code=403,
             detail="Только владелец может удалять участников"
+        )
+    
+    
+    if user_id == project.owner_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Владелец проекта не может удалить сам себя из участников"
         )
     
     member = db.query(ProjectMember).filter(

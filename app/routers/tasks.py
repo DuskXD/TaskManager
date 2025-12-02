@@ -59,7 +59,7 @@ def check_task_access(task_id: int, user: User, db: Session):
     return task
 
 
-@router.post("/api/v1/projects/{project_id}/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/projects/{project_id}/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
     project_id: int,
     task_data: TaskCreate,
@@ -105,7 +105,7 @@ def create_task(
     return db_task
 
 
-@router.get("/api/v1/projects/{project_id}/tasks", response_model=List[TaskListResponse])
+@router.get("/projects/{project_id}/tasks", response_model=List[TaskListResponse])
 def get_project_tasks(
     project_id: int,
     current_user: User = Depends(get_current_user),
@@ -113,13 +113,24 @@ def get_project_tasks(
 ):
     check_project_access(project_id, current_user, db)
     
-    tasks = db.query(Task).filter(Task.project_id == project_id).all()
+    
+    from sqlalchemy.orm import selectinload
+    
+    tasks = db.query(Task).filter(Task.project_id == project_id).options(
+        selectinload(Task.tags)
+    ).all()
+    
+    
+    task_ids = [task.id for task in tasks]
+    comments_counts = dict(
+        db.query(Comment.task_id, func.count(Comment.id))
+        .filter(Comment.task_id.in_(task_ids))
+        .group_by(Comment.task_id)
+        .all()
+    ) if task_ids else {}
     
     result = []
     for task in tasks:
-        tags_count = len(task.tags)
-        comments_count = db.query(func.count(Comment.id)).filter(Comment.task_id == task.id).scalar()
-        
         result.append(TaskListResponse(
             id=task.id,
             title=task.title,
@@ -128,14 +139,14 @@ def get_project_tasks(
             assignee_id=task.assignee_id,
             due_date=task.due_date,
             created_at=task.created_at,
-            tags_count=tags_count,
-            comments_count=comments_count
+            tags_count=len(task.tags),
+            comments_count=comments_counts.get(task.id, 0)
         ))
     
     return result
 
 
-@router.put("/api/v1/tasks/{task_id}", response_model=TaskResponse)
+@router.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
     task_data: TaskUpdate,
@@ -184,7 +195,7 @@ def update_task(
     return task
 
 
-@router.delete("/api/v1/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
     task_id: int,
     current_user: User = Depends(get_current_user),
@@ -207,7 +218,7 @@ def delete_task(
     return None
 
 
-@router.post("/api/v1/tasks/{task_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/tasks/{task_id}/comments", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
 def add_comment(
     task_id: int,
     comment_data: CommentCreate,
@@ -229,7 +240,7 @@ def add_comment(
     return db_comment
 
 
-@router.get("/api/v1/tasks/{task_id}/comments", response_model=List[CommentResponse])
+@router.get("/tasks/{task_id}/comments", response_model=List[CommentResponse])
 def get_task_comments(
     task_id: int,
     current_user: User = Depends(get_current_user),
@@ -242,7 +253,7 @@ def get_task_comments(
     return comments
 
 
-@router.delete("/api/v1/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comment(
     comment_id: int,
     current_user: User = Depends(get_current_user),
@@ -273,7 +284,7 @@ def delete_comment(
     return None
 
 
-@router.post("/api/v1/tasks/{task_id}/tags", response_model=TaskResponse)
+@router.post("/tasks/{task_id}/tags", response_model=TaskResponse)
 def add_tag_to_task(
     task_id: int,
     tag_data: TaskTagAdd,

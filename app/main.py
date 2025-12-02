@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -18,10 +18,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(projects.router)
-app.include_router(tasks.router)
+api_v1 = APIRouter(prefix="/api/v1")
+api_v1.include_router(auth.router)
+api_v1.include_router(users.router)
+api_v1.include_router(projects.router)
+api_v1.include_router(tasks.router)
+
+app.include_router(api_v1)
 
 
 @app.get("/")

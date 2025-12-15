@@ -23,14 +23,14 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Email уже зарегистрирован"
         )
     
     existing_user = db.query(User).filter(User.username == user_data.username).first()
     if existing_user:
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Имя пользователя уже занято"
         )
     

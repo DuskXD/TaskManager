@@ -94,7 +94,10 @@ def get_project(
     db: Session = Depends(get_db)
 ):
     """Получение деталей проекта"""
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.is_active == True
+    ).first()
     
     if not project:
         raise HTTPException(
@@ -114,7 +117,10 @@ def update_project(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.is_active == True
+    ).first()
     
     if not project:
         raise HTTPException(
@@ -147,8 +153,11 @@ def delete_project(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Удаление проекта"""
-    project = db.query(Project).filter(Project.id == project_id).first()
+    """Удаление проекта (soft delete)"""
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.is_active == True
+    ).first()
     
     if not project:
         raise HTTPException(
@@ -162,7 +171,8 @@ def delete_project(
             detail="Только владелец может удалить проект"
         )
     
-    db.delete(project)
+    # Soft delete - помечаем как неактивный
+    project.is_active = False
     db.commit()
     
     return None
@@ -174,7 +184,10 @@ def get_project_stats(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.is_active == True
+    ).first()
     
     if not project:
         raise HTTPException(
@@ -260,7 +273,7 @@ def add_project_member(
     
     if existing_member:
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="Пользователь уже является участником проекта"
         )
     
@@ -284,7 +297,10 @@ def remove_project_member(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    project = db.query(Project).filter(Project.id == project_id).first()
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.is_active == True
+    ).first()
     
     if not project:
         raise HTTPException(

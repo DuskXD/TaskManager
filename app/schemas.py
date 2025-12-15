@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, field_serializer
 from typing import Optional, List
 from datetime import datetime, timezone
 from app.models import TaskStatus, TaskPriority, ProjectRole
@@ -21,6 +21,12 @@ class UserResponse(UserBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('created_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
 
 
 
@@ -55,6 +61,12 @@ class TagResponse(TagBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('created_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
+
 
 
 class ProjectBase(BaseModel):
@@ -81,6 +93,12 @@ class ProjectResponse(ProjectBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('created_at', 'updated_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
+
 
 class ProjectListResponse(BaseModel):
     id: int
@@ -93,6 +111,12 @@ class ProjectListResponse(BaseModel):
     members_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('created_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
 
 
 class ProjectStats(BaseModel):
@@ -124,6 +148,12 @@ class ProjectMemberResponse(BaseModel):
     user: UserResponse
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('joined_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
 
 
 
@@ -164,6 +194,12 @@ class TaskResponse(TaskBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('created_at', 'updated_at', 'due_date')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
+
 
 class TaskListResponse(BaseModel):
     id: int
@@ -177,6 +213,12 @@ class TaskListResponse(BaseModel):
     comments_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('created_at', 'due_date')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
 
 
 
@@ -198,6 +240,12 @@ class CommentResponse(CommentBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_serializer('created_at', 'updated_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
+
 
 
 class AttachmentResponse(BaseModel):
@@ -210,6 +258,12 @@ class AttachmentResponse(BaseModel):
     uploaded_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer('uploaded_at')
+    def serialize_dt(self, dt: datetime, _info):
+        if dt and dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat() if dt else None
 
 
 
